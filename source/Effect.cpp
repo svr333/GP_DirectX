@@ -82,3 +82,8 @@ ID3DX11EffectTechnique* Effect::GetTechnique()
 {
 	return m_pTechnique;
 }
+
+ID3DX11EffectMatrixVariable* Effect::GetMatrix()
+{
+	return m_pMatWorldViewProj;
+}

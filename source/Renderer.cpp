@@ -21,6 +21,9 @@ namespace dae {
 		{
 			std::cout << "DirectX initialization failed!\n";
 		}
+
+		auto aspectRatio = static_cast<float>(m_Width) / m_Height;
+		m_Camera.Initialize(aspectRatio, 45.0f, { 0.0f, 0.0f, -10.0f });
 	}
 
 	Renderer::~Renderer()
@@ -44,7 +47,7 @@ namespace dae {
 
 	void Renderer::Update(const Timer* pTimer)
 	{
-
+		m_Camera.Update(pTimer);
 	}
 
 
@@ -62,14 +65,14 @@ namespace dae {
 		// actual render
 		std::vector<Mesh::Vertex_Input> vertices
 		{
-			{ {0.0f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f} },
-			{ {0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f} },
-			{ {-0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f} }
+			{ {0.0f, 3.0f, 2.0f}, {1.0f, 0.0f, 0.0f} },
+			{ {3.0f, -3.0f, 2.0f}, {0.0f, 0.0f, 1.0f} },
+			{ {-3.0f, -3.0f, 2.0f}, {0.0f, 1.0f, 0.0f} }
 		};
 		std::vector<uint32_t> indices{ 0, 1, 2 };
 
 		Mesh mesh{ m_pDevice, vertices, indices };
-		mesh.Render(m_pDeviceContext);
+		mesh.Render(m_pDeviceContext, m_Camera.viewMatrix * m_Camera.projectionMatrix);
 
 		m_pSwapChain->Present(0, 0);
 	}

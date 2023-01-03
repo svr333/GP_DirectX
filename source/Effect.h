@@ -9,6 +9,7 @@ public:
 	~Effect();
 	ID3DX11Effect* GetEffect();
 	ID3DX11EffectTechnique* GetTechnique();
+	ID3DX11EffectMatrixVariable* GetMatrix();
 
 private:
 	ID3DX11Effect* m_pEffect;

@@ -67,7 +67,7 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_Input>& vertices, con
 	}
 }
 
-void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
+void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjMatrix)
 {
 	// Set primitive topology
 	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -85,6 +85,9 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 
 	// set input layout
 	pDeviceContext->IASetInputLayout(m_pVertexLayout);
+
+	// set matrix
+	m_pEffect->GetMatrix()->SetMatrix((float*)(&worldViewProjMatrix));
 
 	// render a triangle
 	D3DX11_TECHNIQUE_DESC techDesc;

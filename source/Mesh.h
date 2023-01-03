@@ -28,7 +28,7 @@ public:
 	};
 
 	Mesh(ID3D11Device* pDevice, const std::vector<Vertex_Input>& vertices, const std::vector<uint32_t>& indices);
-	void Render(ID3D11DeviceContext* pDeviceContext);
+	void Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjMatrix);
 	~Mesh();
 
 private:
