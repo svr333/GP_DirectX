@@ -1,5 +1,6 @@
 #pragma once
 #include "Camera.h"
+#include "Texture.h"
 
 struct SDL_Window;
 struct SDL_Surface;
@@ -23,6 +24,8 @@ namespace dae
 	private:
 		SDL_Window* m_pWindow{};
 		Camera m_Camera{};
+
+		Texture* m_Texture;
 
 		int m_Width{};
 		int m_Height{};

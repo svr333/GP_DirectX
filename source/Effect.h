@@ -1,6 +1,5 @@
 ﻿#pragma once
-
-struct ID3DX11Effect;
+#include "Texture.h"
 
 class Effect
 {
@@ -10,6 +9,7 @@ public:
 	ID3DX11Effect* GetEffect();
 	ID3DX11EffectTechnique* GetTechnique();
 	ID3DX11EffectMatrixVariable* GetMatrix();
+	void SetDiffuseMap(dae::Texture* pDiffuseMap);
 
 private:
 	ID3DX11Effect* m_pEffect;

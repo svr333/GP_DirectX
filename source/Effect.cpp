@@ -42,14 +42,12 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 		{
 			std::wcout << L"DiffuseMap is invalid.\n";
 		}
-
-		return;
 	}
-
-	std::cout << "Error occured in Effect.cpp.\n";
 
 	if (pErrorBlob)
 	{
+		std::cout << "Error occured in Effect.cpp.\n";
+
 		char* pErrors = (char*)pErrorBlob->GetBufferPointer();
 
 		std::wstringstream ss;
@@ -86,4 +84,12 @@ ID3DX11EffectTechnique* Effect::GetTechnique()
 ID3DX11EffectMatrixVariable* Effect::GetMatrix()
 {
 	return m_pMatWorldViewProj;
+}
+
+void Effect::SetDiffuseMap(dae::Texture* pDiffuseMap)
+{
+	if (m_pDiffuseMap)
+	{
+		m_pDiffuseMap->SetResource(pDiffuseMap->GetSRV());
+	}
 }
