@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Renderer.h"
 #include "Mesh.h"
+#include "Utils.h"
 
 namespace dae {
 
@@ -22,36 +23,26 @@ namespace dae {
 			std::cout << "DirectX initialization failed!\n";
 		}
 
-		// actual render
-		std::vector<Mesh::Vertex_Input> vertices
-		{
-			{{-3, 3, -2}, colors::White, {0, 0}},
-			{{0, 3, -2}, colors::White, {0.5, 0}},
-			{{3, 3, -2}, colors::White, {1, 0}},
-			{{-3, 0, -2}, colors::White, {0, 0.5}},
-			{{0, 0, -2}, colors::White, {0.5, 0.5}},
-			{{3, 0, -2}, colors::White, {1, 0.5}},
-			{{-3, -3, -2}, colors::White, {0, 1}},
-			{{0, -3, -2}, colors::White, {0.5, 1}},
-			{{3, -3, -2}, colors::White, {1, 1}},
-		};
-		std::vector<uint32_t> indices{
-			3, 0, 1,   1, 4, 3,   4, 1, 2,
-			2, 5, 4,   6, 3, 4,   4, 7, 6,
-			7, 4, 5,   5, 8, 7
-		};
-
-		m_Mesh = new Mesh{ m_pDevice, vertices, indices };
-
 		auto aspectRatio = static_cast<float>(m_Width) / m_Height;
-		m_Camera.Initialize(aspectRatio, 45.0f, { 0.0f, 0.0f, -10.0f });
+		m_Camera.Initialize(aspectRatio, 45.0f, { 0.0f, 0.0f, -50.0f });
 
-		m_pTexture = Texture::LoadFromFile(m_pDevice, "Resources/uv_grid_2.png");
+		m_pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_diffuse.png");
+
+		std::vector<Mesh::Vertex_In> vertices;
+		std::vector<uint32_t> indices;
+
+		Utils::ParseOBJ("Resources/vehicle.obj", vertices, indices);
+		m_Mesh = new Mesh{ m_pDevice, vertices, indices };
+		m_Mesh->SetTexture(m_pTexture);
 	}
 
 	Renderer::~Renderer()
 	{
-		m_pSamplerState->Release();
+		if (m_pSamplerState)
+		{
+			m_pSamplerState->Release();
+		}
+
 		m_pRenderTargetView->Release();
 		m_pRenderTargetBuffer->Release();
 		m_pDepthStencilView->Release();
@@ -89,7 +80,6 @@ namespace dae {
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-		m_Mesh->SetTexture(m_pTexture);
 		m_Mesh->Render(m_pDeviceContext, m_Camera.viewMatrix * m_Camera.projectionMatrix);
 
 		m_pSwapChain->Present(0, 0);

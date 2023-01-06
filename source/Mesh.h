@@ -10,21 +10,21 @@ class Effect;
 class Mesh
 {
 public:
-	struct Vertex_Input
+	struct Vertex_In
 	{
-		Vector3 m_Position;
-		ColorRGB m_Color;
+		Vector3 position;
+		ColorRGB color;
 		Vector2 uv;
 	};
 
-	struct Vertex_Output
+	struct Vertex_Out
 	{
 		Vector4 position;
 		ColorRGB color;
 		Vector2 uv;
 	};
 
-	Mesh(ID3D11Device* pDevice, const std::vector<Vertex_Input>& vertices, const std::vector<uint32_t>& indices);
+	Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices);
 	void Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjMatrix);
 
 	void SetTexture(Texture* texture);

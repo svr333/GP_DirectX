@@ -2,7 +2,7 @@
 #include "Mesh.h"
 #include "Effect.h"
 
-Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_Input>& vertices, const std::vector<uint32_t>& indices)
+Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices)
 {
 	m_pEffect = new Effect( pDevice, L"Resources/PosCol3D.fx");
 
@@ -37,7 +37,7 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_Input>& vertices, con
 
 	D3D11_BUFFER_DESC bd = {};
 	bd.Usage = D3D11_USAGE_IMMUTABLE;
-	bd.ByteWidth = sizeof(Vertex_Input) * (uint32_t)vertices.size();
+	bd.ByteWidth = sizeof(Vertex_In) * (uint32_t)vertices.size();
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 	bd.MiscFlags = 0;
@@ -81,7 +81,7 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewPr
 	pDeviceContext->IASetInputLayout(m_pVertexLayout);
 
 	// set vertex buffer
-	UINT stride = sizeof(Vertex_Input);
+	UINT stride = sizeof(Vertex_In);
 	UINT offset = 0;
 	pDeviceContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
 
