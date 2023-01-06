@@ -22,50 +22,6 @@ namespace dae {
 			std::cout << "DirectX initialization failed!\n";
 		}
 
-		auto aspectRatio = static_cast<float>(m_Width) / m_Height;
-		m_Camera.Initialize(aspectRatio, 45.0f, { 0.0f, 0.0f, -10.0f });
-
-		m_Texture = Texture::LoadFromFile(m_pDevice, "Resources/uv_grid_2.png");
-	}
-
-	Renderer::~Renderer()
-	{
-		m_pRenderTargetView->Release();
-		m_pRenderTargetBuffer->Release();
-		m_pDepthStencilView->Release();
-		m_pDepthStencilBuffer->Release();
-		m_pSwapChain->Release();
-
-		if (m_pDeviceContext)
-		{
-			m_pDeviceContext->ClearState();
-			m_pDeviceContext->Flush();
-			m_pDeviceContext->Release();
-		}
-
-		m_pDevice->Release();
-		m_pDXGIFactory->Release();
-
-		delete m_Texture;
-	}
-
-	void Renderer::Update(const Timer* pTimer)
-	{
-		m_Camera.Update(pTimer);
-	}
-
-
-	void Renderer::Render() const
-	{
-		if (!m_IsInitialized)
-		{
-			return;
-		}
-
-		ColorRGB clearColor = ColorRGB(0.0f, 0.0f, 0.3f);
-		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
-		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
 		// actual render
 		std::vector<Mesh::Vertex_Input> vertices
 		{
@@ -85,12 +41,99 @@ namespace dae {
 			7, 4, 5,   5, 8, 7
 		};
 
-		Mesh mesh{ m_pDevice, vertices, indices };
-		mesh.SetTexture(m_Texture);
+		m_Mesh = new Mesh{ m_pDevice, vertices, indices };
 
-		mesh.Render(m_pDeviceContext, m_Camera.viewMatrix * m_Camera.projectionMatrix);
+		auto aspectRatio = static_cast<float>(m_Width) / m_Height;
+		m_Camera.Initialize(aspectRatio, 45.0f, { 0.0f, 0.0f, -10.0f });
+
+		m_pTexture = Texture::LoadFromFile(m_pDevice, "Resources/uv_grid_2.png");
+	}
+
+	Renderer::~Renderer()
+	{
+		m_pSamplerState->Release();
+		m_pRenderTargetView->Release();
+		m_pRenderTargetBuffer->Release();
+		m_pDepthStencilView->Release();
+		m_pDepthStencilBuffer->Release();
+		m_pSwapChain->Release();
+
+		if (m_pDeviceContext)
+		{
+			m_pDeviceContext->ClearState();
+			m_pDeviceContext->Flush();
+			m_pDeviceContext->Release();
+		}
+
+		m_pDevice->Release();
+		m_pDXGIFactory->Release();
+
+		delete m_pTexture;
+		delete m_Mesh;
+	}
+
+	void Renderer::Update(const Timer* pTimer)
+	{
+		m_Camera.Update(pTimer);
+	}
+
+
+	void Renderer::Render()
+	{
+		if (!m_IsInitialized)
+		{
+			return;
+		}
+
+		ColorRGB clearColor = ColorRGB(0.0f, 0.0f, 0.3f);
+		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
+		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+		m_Mesh->SetTexture(m_pTexture);
+		m_Mesh->Render(m_pDeviceContext, m_Camera.viewMatrix * m_Camera.projectionMatrix);
 
 		m_pSwapChain->Present(0, 0);
+	}
+
+	void Renderer::CycleSampleState()
+	{
+		m_SampleState = SampleState(((int)m_SampleState + 1) % (int)SampleState::End);
+
+		// release previous one so we can create a new one
+		if (m_pSamplerState)
+		{
+			m_pSamplerState->Release();
+		}
+
+		D3D11_SAMPLER_DESC sampleDesc{};
+		sampleDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampleDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampleDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+
+		switch (m_SampleState)
+		{
+			case SampleState::Point:
+				sampleDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+				break;
+			case SampleState::Linear:
+				sampleDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+				break;
+			case SampleState::Antisotropic:
+				sampleDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+				break;
+			default:
+				break;
+		}
+
+		std::wcout << L"Sampler state: " << (int)m_SampleState << "\n";
+		HRESULT result = m_pDevice->CreateSamplerState(&sampleDesc, &m_pSamplerState);
+
+		if (FAILED(result))
+		{
+			std::wcout << L"Failed to update Sampler State!\n";
+		}
+
+		m_Mesh->UpdateSampleState(m_pSamplerState);
 	}
 
 	HRESULT Renderer::InitializeDirectX()

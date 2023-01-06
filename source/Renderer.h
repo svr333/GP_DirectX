@@ -1,6 +1,7 @@
 #pragma once
 #include "Camera.h"
 #include "Texture.h"
+#include "Mesh.h"
 
 struct SDL_Window;
 struct SDL_Surface;
@@ -19,18 +20,30 @@ namespace dae
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
 		void Update(const Timer* pTimer);
-		void Render() const;
+		void Render();
+
+		void CycleSampleState();
+
+		enum class SampleState
+		{
+			Point,
+			Linear,
+			Antisotropic,
+			End
+		};
 
 	private:
 		SDL_Window* m_pWindow{};
 		Camera m_Camera{};
 
-		Texture* m_Texture;
+		Texture* m_pTexture;
+		Mesh* m_Mesh;
 
 		int m_Width{};
 		int m_Height{};
 
-		bool m_IsInitialized{ false };
+		bool m_IsInitialized = false;
+		SampleState m_SampleState = SampleState::Point;
 
 		ID3D11Device* m_pDevice;
 		ID3D11DeviceContext* m_pDeviceContext;
@@ -42,6 +55,8 @@ namespace dae
 		ID3D11DepthStencilView* m_pDepthStencilView;
 		ID3D11Texture2D* m_pRenderTargetBuffer;
 		ID3D11RenderTargetView* m_pRenderTargetView;
+
+		ID3D11SamplerState* m_pSamplerState;
 
 		HRESULT InitializeDirectX();
 	};

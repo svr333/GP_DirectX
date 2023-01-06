@@ -110,6 +110,17 @@ void Mesh::SetTexture(Texture* texture)
 	m_pEffect->SetDiffuseMap(texture);
 }
 
+void Mesh::UpdateSampleState(ID3D11SamplerState* pSampleState)
+{
+	HRESULT result = m_pEffect->GetEffect()->GetVariableByName("samPoint")->AsSampler()->SetSampler(0, pSampleState);
+
+	if (FAILED(result))
+	{
+		std::wcout << L"Couldn't update sampler state\n";
+		throw;
+	}
+}
+
 Mesh::~Mesh()
 {
 	m_pVertexLayout->Release();

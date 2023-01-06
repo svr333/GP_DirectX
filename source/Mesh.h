@@ -28,6 +28,7 @@ public:
 	void Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjMatrix);
 
 	void SetTexture(Texture* texture);
+	void UpdateSampleState(ID3D11SamplerState* pSampleState);
 	~Mesh();
 
 private:
