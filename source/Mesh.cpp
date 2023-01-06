@@ -7,7 +7,7 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const 
 	m_pEffect = new Effect( pDevice, L"Resources/PosCol3D.fx");
 
 	// create vertex layout
-	static const uint32_t numElements{ 3 };
+	static const uint32_t numElements{ 5 };
 	D3D11_INPUT_ELEMENT_DESC vertexDesc[numElements]{};
 
 	vertexDesc[0].SemanticName = "POSITION";
@@ -24,6 +24,16 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const 
 	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
 	vertexDesc[2].AlignedByteOffset = 24;
 	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[3].SemanticName = "NORMAL";
+	vertexDesc[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[3].AlignedByteOffset = 32;
+	vertexDesc[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[4].SemanticName = "TANGENT";
+	vertexDesc[4].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[4].AlignedByteOffset = 44;
+	vertexDesc[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
 	// create input layout
 	D3DX11_PASS_DESC passDesc;

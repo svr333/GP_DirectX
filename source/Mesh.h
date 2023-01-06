@@ -15,6 +15,8 @@ public:
 		Vector3 position;
 		ColorRGB color;
 		Vector2 uv;
+		Vector3 normal;
+		Vector3 tangent;
 	};
 
 	struct Vertex_Out
@@ -22,6 +24,8 @@ public:
 		Vector4 position;
 		ColorRGB color;
 		Vector2 uv;
+		Vector3 normal;
+		Vector3 tangent;
 	};
 
 	Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices);
