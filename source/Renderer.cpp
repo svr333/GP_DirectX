@@ -26,14 +26,11 @@ namespace dae {
 		auto aspectRatio = static_cast<float>(m_Width) / m_Height;
 		m_Camera.Initialize(aspectRatio, 45.0f, { 0.0f, 0.0f, -50.0f });
 
-		m_pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_diffuse.png");
-
 		std::vector<Mesh::Vertex_In> vertices;
 		std::vector<uint32_t> indices;
 
 		Utils::ParseOBJ("Resources/vehicle.obj", vertices, indices);
 		m_Mesh = new Mesh{ m_pDevice, vertices, indices };
-		m_Mesh->SetTexture(m_pTexture);
 	}
 
 	Renderer::~Renderer()
@@ -59,7 +56,6 @@ namespace dae {
 		m_pDevice->Release();
 		m_pDXGIFactory->Release();
 
-		delete m_pTexture;
 		delete m_Mesh;
 	}
 
@@ -80,7 +76,7 @@ namespace dae {
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-		m_Mesh->Render(m_pDeviceContext, m_Camera.viewMatrix * m_Camera.projectionMatrix);
+		m_Mesh->Render(m_pDeviceContext, m_Camera.viewMatrix * m_Camera.projectionMatrix, Matrix{}, m_Camera.invViewMatrix);
 
 		m_pSwapChain->Present(0, 0);
 	}

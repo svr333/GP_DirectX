@@ -80,9 +80,21 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const 
 	{
 		throw;
 	}
+
+	m_pTexture = Texture::LoadFromFile(pDevice, "Resources/vehicle_diffuse.png");
+	m_pEffect->SetDiffuseMap(m_pTexture);
+
+	m_pNormal = Texture::LoadFromFile(pDevice, "Resources/vehicle_normal.png");
+	m_pEffect->SetNormalMap(m_pNormal);
+
+	m_pSpecular = Texture::LoadFromFile(pDevice, "Resources/vehicle_specular.png");
+	m_pEffect->SetSpecularMap(m_pSpecular);
+
+	m_pGloss = Texture::LoadFromFile(pDevice, "Resources/vehicle_gloss.png");
+	m_pEffect->SetGlossMap(m_pGloss);
 }
 
-void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjMatrix)
+void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjMatrix, const Matrix& worldMatrix, const Matrix& invViewMatrix)
 {
 	// Set primitive topology
 	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -101,8 +113,10 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewPr
 	// set input layout
 	pDeviceContext->IASetInputLayout(m_pVertexLayout);
 
-	// set matrix
-	m_pEffect->GetMatrix()->SetMatrix((float*)(&worldViewProjMatrix));
+	// set matrices
+	m_pEffect->GetWorldViewMatrix()->SetMatrix((float*)(&worldViewProjMatrix));
+	m_pEffect->GetWorldMatrix()->SetMatrix((float*)&worldMatrix);
+	m_pEffect->GetViewInverseMatrix()->SetMatrix((float*)&invViewMatrix);
 
 	// render a triangle
 	D3DX11_TECHNIQUE_DESC techDesc;
@@ -115,10 +129,6 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewPr
 	}
 }
 
-void Mesh::SetTexture(Texture* texture)
-{
-	m_pEffect->SetDiffuseMap(texture);
-}
 
 void Mesh::UpdateSampleState(ID3D11SamplerState* pSampleState)
 {
@@ -136,5 +146,10 @@ Mesh::~Mesh()
 	m_pVertexLayout->Release();
 	m_pIndexBuffer->Release();
 	m_pVertexBuffer->Release();
+
 	delete m_pEffect;
+	delete m_pTexture;
+	delete m_pNormal;
+	delete m_pSpecular;
+	delete m_pGloss;
 }

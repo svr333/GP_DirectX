@@ -36,7 +36,6 @@ namespace dae
 		SDL_Window* m_pWindow{};
 		Camera m_Camera{};
 
-		Texture* m_pTexture;
 		Mesh* m_Mesh;
 
 		int m_Width{};

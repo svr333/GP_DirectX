@@ -29,6 +29,10 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 			std::wcout << "Technique is invalid\n";
 		}
 
+		//--------------------------------
+		//Matrices
+		//--------------------------------
+
 		m_pMatWorldViewProj = m_pEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
 
 		if (!m_pMatWorldViewProj->IsValid())
@@ -36,11 +40,49 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 			std::wcout << L"WorldViewProjMatrix is invalid.\n";
 		}
 
+		m_pMatWorld = m_pEffect->GetVariableByName("gWorld")->AsMatrix();
+
+		if (!m_pMatWorld->IsValid())
+		{
+			std::wcout << L"m_pMatWorldVar is not valid!\n";
+		}
+		m_pMatViewInverse = m_pEffect->GetVariableByName("gViewInverse")->AsMatrix();
+
+		if (!m_pMatViewInverse->IsValid())
+		{
+			std::wcout << L"m_pMatViewInverseVar is not valid!\n";
+		}
+
+		//--------------------------------
+		// Texture2D
+		//--------------------------------
+
 		m_pDiffuseMap = m_pEffect->GetVariableByName("gDiffuseMap")->AsShaderResource();
 
 		if (!m_pDiffuseMap->IsValid())
 		{
 			std::wcout << L"DiffuseMap is invalid.\n";
+		}
+
+		m_pNormalMap = m_pEffect->GetVariableByName("gNormalMap")->AsShaderResource();
+
+		if (!m_pNormalMap->IsValid())
+		{
+			std::wcout << L"NormalMap is invalid.\n";
+		}
+
+		m_pSpecularMap = m_pEffect->GetVariableByName("gSpecularMap")->AsShaderResource();
+
+		if (!m_pSpecularMap->IsValid())
+		{
+			std::wcout << L"SpecularMap is invalid.\n";
+		}
+
+		m_pGlossMap = m_pEffect->GetVariableByName("gGlossinessMap")->AsShaderResource();
+
+		if (!m_pGlossMap->IsValid())
+		{
+			std::wcout << L"GlossinessMap is invalid.\n";
 		}
 	}
 
@@ -66,7 +108,9 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 Effect::~Effect()
 {
 	m_pDiffuseMap->Release();
+	m_pMatViewInverse->Release();
 	m_pMatWorldViewProj->Release();
+	m_pMatWorld->Release();
 	m_pTechnique->Release();
 	m_pEffect->Release();
 }
@@ -81,9 +125,19 @@ ID3DX11EffectTechnique* Effect::GetTechnique()
 	return m_pTechnique;
 }
 
-ID3DX11EffectMatrixVariable* Effect::GetMatrix()
+ID3DX11EffectMatrixVariable* Effect::GetWorldViewMatrix()
 {
 	return m_pMatWorldViewProj;
+}
+
+ID3DX11EffectMatrixVariable* Effect::GetWorldMatrix()
+{
+	return m_pMatWorld;
+}
+
+ID3DX11EffectMatrixVariable* Effect::GetViewInverseMatrix()
+{
+	return m_pMatViewInverse;
 }
 
 void Effect::SetDiffuseMap(dae::Texture* pDiffuseMap)
@@ -92,4 +146,17 @@ void Effect::SetDiffuseMap(dae::Texture* pDiffuseMap)
 	{
 		m_pDiffuseMap->SetResource(pDiffuseMap->GetSRV());
 	}
+}
+
+void Effect::SetNormalMap(dae::Texture* pNormalMap)
+{
+
+}
+
+void Effect::SetSpecularMap(dae::Texture* pSpecularMap)
+{
+}
+
+void Effect::SetGlossMap(dae::Texture* pGlossMap)
+{
 }
