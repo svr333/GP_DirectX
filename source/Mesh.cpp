@@ -2,49 +2,12 @@
 #include "Mesh.h"
 #include "Effect.h"
 
-Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices)
+Mesh::Mesh(ID3D11Device* pDevice, BaseEffect* pEffect, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices)
+	: m_pEffect(pEffect)
 {
-	m_pEffect = new Effect( pDevice, L"Resources/PosCol3D.fx");
+	m_pVertexLayout = m_pEffect->CreateInputLayout(pDevice);
 
-	// create vertex layout
-	static const uint32_t numElements{ 5 };
-	D3D11_INPUT_ELEMENT_DESC vertexDesc[numElements]{};
-
-	vertexDesc[0].SemanticName = "POSITION";
-	vertexDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	vertexDesc[0].AlignedByteOffset = 0;
-	vertexDesc[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-	vertexDesc[1].SemanticName = "COLOR";
-	vertexDesc[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	vertexDesc[1].AlignedByteOffset = 12;
-	vertexDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-	vertexDesc[2].SemanticName = "TEXCOORD";
-	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
-	vertexDesc[2].AlignedByteOffset = 24;
-	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-	vertexDesc[3].SemanticName = "NORMAL";
-	vertexDesc[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	vertexDesc[3].AlignedByteOffset = 32;
-	vertexDesc[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-	vertexDesc[4].SemanticName = "TANGENT";
-	vertexDesc[4].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	vertexDesc[4].AlignedByteOffset = 44;
-	vertexDesc[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-	// create input layout
-	D3DX11_PASS_DESC passDesc;
-	m_pEffect->GetTechnique()->GetPassByIndex(0)->GetDesc(&passDesc);
-	HRESULT result = pDevice->CreateInputLayout(vertexDesc, numElements, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &m_pVertexLayout);
-
-	if (FAILED(result))
-	{
-		throw;
-	}
-
+	// create vertex buffer
 	D3D11_BUFFER_DESC bd = {};
 	bd.Usage = D3D11_USAGE_IMMUTABLE;
 	bd.ByteWidth = sizeof(Vertex_In) * (uint32_t)vertices.size();
@@ -55,7 +18,7 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const 
 	D3D11_SUBRESOURCE_DATA initData = { 0 };
 	initData.pSysMem = vertices.data();
 	
-	result = pDevice->CreateBuffer(&bd, &initData, &m_pVertexBuffer);
+	auto result = pDevice->CreateBuffer(&bd, &initData, &m_pVertexBuffer);
 
 	if (FAILED(result))
 	{
@@ -80,18 +43,6 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const 
 	{
 		throw;
 	}
-
-	m_pTexture = Texture::LoadFromFile(pDevice, "Resources/vehicle_diffuse.png");
-	m_pEffect->SetDiffuseMap(m_pTexture);
-
-	m_pNormal = Texture::LoadFromFile(pDevice, "Resources/vehicle_normal.png");
-	m_pEffect->SetNormalMap(m_pNormal);
-
-	m_pSpecular = Texture::LoadFromFile(pDevice, "Resources/vehicle_specular.png");
-	m_pEffect->SetSpecularMap(m_pSpecular);
-
-	m_pGloss = Texture::LoadFromFile(pDevice, "Resources/vehicle_gloss.png");
-	m_pEffect->SetGlossMap(m_pGloss);
 }
 
 void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjMatrix, const Matrix& worldMatrix, const Matrix& invViewMatrix)
@@ -113,10 +64,19 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewPr
 	// set input layout
 	pDeviceContext->IASetInputLayout(m_pVertexLayout);
 
+
 	// set matrices
 	m_pEffect->GetWorldViewMatrix()->SetMatrix((float*)(&worldViewProjMatrix));
-	m_pEffect->GetWorldMatrix()->SetMatrix((float*)&worldMatrix);
-	m_pEffect->GetViewInverseMatrix()->SetMatrix((float*)&invViewMatrix);
+
+	if (m_pEffect->GetWorldMatrix())
+	{
+		m_pEffect->GetWorldMatrix()->SetMatrix((float*)&worldMatrix);
+	}
+	
+	if (m_pEffect->GetViewInverseMatrix())
+	{
+		m_pEffect->GetViewInverseMatrix()->SetMatrix((float*)&invViewMatrix);
+	}
 
 	// render a triangle
 	D3DX11_TECHNIQUE_DESC techDesc;
@@ -129,9 +89,18 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewPr
 	}
 }
 
+void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjMatrix)
+{
+	Render(pDeviceContext, worldViewProjMatrix, {}, {});
+}
 
 void Mesh::UpdateSampleState(ID3D11SamplerState* pSampleState)
 {
+	if (!pSampleState)
+	{
+		return;
+	}
+
 	HRESULT result = m_pEffect->GetEffect()->GetVariableByName("samPoint")->AsSampler()->SetSampler(0, pSampleState);
 
 	if (FAILED(result))
@@ -148,8 +117,4 @@ Mesh::~Mesh()
 	m_pVertexBuffer->Release();
 
 	delete m_pEffect;
-	delete m_pTexture;
-	delete m_pNormal;
-	delete m_pSpecular;
-	delete m_pGloss;
 }

@@ -22,6 +22,25 @@ SamplerState samPoint
     AddressV = Wrap;
 };
 
+RasterizerState gRasterizerState
+{
+    CullMode = back;
+};
+
+BlendState gBlendState
+{
+    BlendEnable[0] = false;
+    RenderTargetWriteMask[0] = 0x0F;
+};
+
+DepthStencilState gDepthStencilState
+{
+    DepthEnable = true;
+    DepthWriteMask = 1;
+    DepthFunc = less;
+    StencilEnable = false;
+};
+
 //-----------------------------------------------------
 //  Input/Output Structs
 //-----------------------------------------------------
@@ -85,13 +104,13 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     sampledNormal = 2.f * sampledNormal - float3(1.f, 1.f, 1.f);
     sampledNormal = mul(sampledNormal, tangentSpaceAxis);
 
-    float observedArea = saturate(dot(input.Normal, -gLightDirection));
+    float observedArea = saturate(dot(sampledNormal, -gLightDirection));
     float4 lambert = Diffuse(1.f, gDiffuseMap.Sample(samPoint, input.Uv));
 
     float3 viewDirection = normalize(input.WorldPosition.xyz - gViewInverse[3].xyz);
     float phongExp = gShininess * gGlossinessMap.Sample(samPoint, input.Uv).r;
     float phong = Phong(gSpecularMap.Sample(samPoint, input.Uv), 1.f, phongExp, gLightDirection, viewDirection, sampledNormal);
-     
+
     return (lambert + phong) * observedArea;
 }
 
@@ -102,8 +121,11 @@ technique11 DefaultTechnique
 {
     pass P0
     {
-        SetVertexShader( CompileShader( vs_5_0, VS() ) );
-        SetGeometryShader( NULL );
-        SetPixelShader( CompileShader( ps_5_0, PS() ) );
+        SetRasterizerState(gRasterizerState);
+        SetDepthStencilState(gDepthStencilState, 0);
+        SetBlendState(gBlendState, float4(0.0f, 0.0f, 0.0f, 0.0f), 0xFFFFFFFF);
+        SetVertexShader(CompileShader(vs_5_0, VS()));
+        SetGeometryShader(NULL);
+        SetPixelShader(CompileShader(ps_5_0, PS()));
     }
 }

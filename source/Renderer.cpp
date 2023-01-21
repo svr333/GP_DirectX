@@ -2,6 +2,8 @@
 #include "Renderer.h"
 #include "Mesh.h"
 #include "Utils.h"
+#include "Effect.h"
+#include "TransparentEffect.h"
 
 namespace dae {
 
@@ -30,7 +32,13 @@ namespace dae {
 		std::vector<uint32_t> indices;
 
 		Utils::ParseOBJ("Resources/vehicle.obj", vertices, indices);
-		m_Mesh = new Mesh{ m_pDevice, vertices, indices };
+		m_pMesh = new Mesh{ m_pDevice, new Effect{ m_pDevice }, vertices, indices };
+
+		// not sure if necessary but for safety
+		vertices.clear();
+		indices.clear();
+		Utils::ParseOBJ("Resources/fireFX.obj", vertices, indices);
+		m_pTransparentMesh = new Mesh{ m_pDevice, new TransparentEffect{ m_pDevice }, vertices, indices };
 	}
 
 	Renderer::~Renderer()
@@ -56,7 +64,8 @@ namespace dae {
 		m_pDevice->Release();
 		m_pDXGIFactory->Release();
 
-		delete m_Mesh;
+		delete m_pMesh;
+		delete m_pTransparentMesh;
 	}
 
 	void Renderer::Update(const Timer* pTimer)
@@ -76,7 +85,8 @@ namespace dae {
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-		m_Mesh->Render(m_pDeviceContext, m_Camera.viewMatrix * m_Camera.projectionMatrix, Matrix{}, m_Camera.invViewMatrix);
+		m_pMesh->Render(m_pDeviceContext, m_Camera.viewMatrix * m_Camera.projectionMatrix, Matrix{}, m_Camera.invViewMatrix);
+		m_pTransparentMesh->Render(m_pDeviceContext, m_Camera.viewMatrix * m_Camera.projectionMatrix);
 
 		m_pSwapChain->Present(0, 0);
 	}
@@ -119,7 +129,7 @@ namespace dae {
 			std::wcout << L"Failed to update Sampler State!\n";
 		}
 
-		m_Mesh->UpdateSampleState(m_pSamplerState);
+		m_pMesh->UpdateSampleState(m_pSamplerState);
 	}
 
 	HRESULT Renderer::InitializeDirectX()

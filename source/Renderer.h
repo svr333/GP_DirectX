@@ -36,7 +36,8 @@ namespace dae
 		SDL_Window* m_pWindow{};
 		Camera m_Camera{};
 
-		Mesh* m_Mesh;
+		Mesh* m_pMesh;
+		Mesh* m_pTransparentMesh;
 
 		int m_Width{};
 		int m_Height{};

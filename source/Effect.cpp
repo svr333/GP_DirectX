@@ -3,131 +3,121 @@
 
 #include <sstream>
 
-Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
-	: m_pEffect(), m_pTechnique()
+Effect::Effect(ID3D11Device* pDevice)
+	: BaseEffect(pDevice, L"Resources/PosCol3D.fx")
 {
-	HRESULT result = S_OK;
-	ID3D10Blob* pErrorBlob = nullptr;
-	ID3DX11Effect* pEffect;
+	//--------------------------------
+	// Matrices
+	//--------------------------------
+	m_pMatWorld = m_pEffect->GetVariableByName("gWorld")->AsMatrix();
 
-	DWORD shaderFlags = 0;
-#if defined(DEBUG) || defined(_DEBUG)
-	shaderFlags |= D3DCOMPILE_DEBUG;
-	shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
-
-	result = D3DX11CompileEffectFromFile(assetFile.c_str(), nullptr, nullptr, shaderFlags, 0, pDevice, &pEffect, &pErrorBlob);
-
-	if (!FAILED(result))
+	if (!m_pMatWorld->IsValid())
 	{
-		m_pEffect = pEffect;
+		std::wcout << L"m_pMatWorldVar is not valid!\n";
+	}
+	m_pMatViewInverse = m_pEffect->GetVariableByName("gViewInverse")->AsMatrix();
 
-		m_pTechnique = m_pEffect->GetTechniqueByName("DefaultTechnique");
-
-		if (!m_pTechnique->IsValid())
-		{
-			std::wcout << "Technique is invalid\n";
-		}
-
-		//--------------------------------
-		//Matrices
-		//--------------------------------
-
-		m_pMatWorldViewProj = m_pEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
-
-		if (!m_pMatWorldViewProj->IsValid())
-		{
-			std::wcout << L"WorldViewProjMatrix is invalid.\n";
-		}
-
-		m_pMatWorld = m_pEffect->GetVariableByName("gWorld")->AsMatrix();
-
-		if (!m_pMatWorld->IsValid())
-		{
-			std::wcout << L"m_pMatWorldVar is not valid!\n";
-		}
-		m_pMatViewInverse = m_pEffect->GetVariableByName("gViewInverse")->AsMatrix();
-
-		if (!m_pMatViewInverse->IsValid())
-		{
-			std::wcout << L"m_pMatViewInverseVar is not valid!\n";
-		}
-
-		//--------------------------------
-		// Texture2D
-		//--------------------------------
-
-		m_pDiffuseMap = m_pEffect->GetVariableByName("gDiffuseMap")->AsShaderResource();
-
-		if (!m_pDiffuseMap->IsValid())
-		{
-			std::wcout << L"DiffuseMap is invalid.\n";
-		}
-
-		m_pNormalMap = m_pEffect->GetVariableByName("gNormalMap")->AsShaderResource();
-
-		if (!m_pNormalMap->IsValid())
-		{
-			std::wcout << L"NormalMap is invalid.\n";
-		}
-
-		m_pSpecularMap = m_pEffect->GetVariableByName("gSpecularMap")->AsShaderResource();
-
-		if (!m_pSpecularMap->IsValid())
-		{
-			std::wcout << L"SpecularMap is invalid.\n";
-		}
-
-		m_pGlossMap = m_pEffect->GetVariableByName("gGlossinessMap")->AsShaderResource();
-
-		if (!m_pGlossMap->IsValid())
-		{
-			std::wcout << L"GlossinessMap is invalid.\n";
-		}
+	if (!m_pMatViewInverse->IsValid())
+	{
+		std::wcout << L"m_pMatViewInverseVar is not valid!\n";
 	}
 
-	if (pErrorBlob)
+	//--------------------------------
+	// Texture2D
+	//--------------------------------
+	m_pNormalMap = m_pEffect->GetVariableByName("gNormalMap")->AsShaderResource();
+
+	if (!m_pNormalMap->IsValid())
 	{
-		std::cout << "Error occured in Effect.cpp.\n";
-
-		char* pErrors = (char*)pErrorBlob->GetBufferPointer();
-
-		std::wstringstream ss;
-		for (unsigned int i = 0; i < pErrorBlob->GetBufferSize(); ++i)
-		{
-			ss << pErrors[i];
-		}
-
-		OutputDebugStringW(ss.str().c_str());
-		std::wcout << ss.str() << "\n";
-
-		pErrorBlob->Release();
+		std::wcout << L"NormalMap is invalid.\n";
 	}
+
+	m_pSpecularMap = m_pEffect->GetVariableByName("gSpecularMap")->AsShaderResource();
+
+	if (!m_pSpecularMap->IsValid())
+	{
+		std::wcout << L"SpecularMap is invalid.\n";
+	}
+
+	m_pGlossMap = m_pEffect->GetVariableByName("gGlossinessMap")->AsShaderResource();
+
+	if (!m_pGlossMap->IsValid())
+	{
+		std::wcout << L"GlossinessMap is invalid.\n";
+	}
+
+	// set textures
+	m_pTexture = Texture::LoadFromFile(pDevice, "Resources/vehicle_diffuse.png");
+	SetDiffuseMap(m_pTexture);
+
+	m_pNormal = Texture::LoadFromFile(pDevice, "Resources/vehicle_normal.png");
+	SetNormalMap(m_pNormal);
+
+	m_pSpecular = Texture::LoadFromFile(pDevice, "Resources/vehicle_specular.png");
+	SetSpecularMap(m_pSpecular);
+
+	m_pGloss = Texture::LoadFromFile(pDevice, "Resources/vehicle_gloss.png");
+	SetGlossMap(m_pGloss);
 }
 
 Effect::~Effect()
 {
-	m_pDiffuseMap->Release();
+	m_pSpecularMap->Release();
+	m_pNormalMap->Release();
+	m_pGlossMap->Release();
 	m_pMatViewInverse->Release();
-	m_pMatWorldViewProj->Release();
 	m_pMatWorld->Release();
-	m_pTechnique->Release();
-	m_pEffect->Release();
+
+	delete m_pGloss;
+	delete m_pSpecular;
+	delete m_pNormal;
+	delete m_pTexture;
 }
 
-ID3DX11Effect* Effect::GetEffect()
+ID3D11InputLayout* Effect::CreateInputLayout(ID3D11Device* pDevice)
 {
-	return m_pEffect;
-}
+	// create vertex layout
+	static const uint32_t numElements{ 5 };
+	D3D11_INPUT_ELEMENT_DESC vertexDesc[numElements]{};
 
-ID3DX11EffectTechnique* Effect::GetTechnique()
-{
-	return m_pTechnique;
-}
+	vertexDesc[0].SemanticName = "POSITION";
+	vertexDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[0].AlignedByteOffset = 0;
+	vertexDesc[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
-ID3DX11EffectMatrixVariable* Effect::GetWorldViewMatrix()
-{
-	return m_pMatWorldViewProj;
+	vertexDesc[1].SemanticName = "COLOR";
+	vertexDesc[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[1].AlignedByteOffset = 12;
+	vertexDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[2].SemanticName = "TEXCOORD";
+	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
+	vertexDesc[2].AlignedByteOffset = 24;
+	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[3].SemanticName = "NORMAL";
+	vertexDesc[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[3].AlignedByteOffset = 32;
+	vertexDesc[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[4].SemanticName = "TANGENT";
+	vertexDesc[4].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[4].AlignedByteOffset = 44;
+	vertexDesc[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	ID3D11InputLayout* pVertexLayout;
+
+	// create input layout
+	D3DX11_PASS_DESC passDesc;
+	GetTechnique()->GetPassByIndex(0)->GetDesc(&passDesc);
+	HRESULT result = pDevice->CreateInputLayout(vertexDesc, numElements, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &pVertexLayout);
+
+	if (FAILED(result))
+	{
+		throw;
+	}
+
+	return pVertexLayout;
 }
 
 ID3DX11EffectMatrixVariable* Effect::GetWorldMatrix()
@@ -140,23 +130,26 @@ ID3DX11EffectMatrixVariable* Effect::GetViewInverseMatrix()
 	return m_pMatViewInverse;
 }
 
-void Effect::SetDiffuseMap(dae::Texture* pDiffuseMap)
-{
-	if (m_pDiffuseMap)
-	{
-		m_pDiffuseMap->SetResource(pDiffuseMap->GetSRV());
-	}
-}
-
 void Effect::SetNormalMap(dae::Texture* pNormalMap)
 {
-
+	if (m_pNormalMap)
+	{
+		m_pNormalMap->SetResource(pNormalMap->GetSRV());
+	}
 }
 
 void Effect::SetSpecularMap(dae::Texture* pSpecularMap)
 {
+	if (m_pSpecularMap)
+	{
+		m_pSpecularMap->SetResource(pSpecularMap->GetSRV());
+	}
 }
 
 void Effect::SetGlossMap(dae::Texture* pGlossMap)
 {
+	if (m_pGlossMap)
+	{
+		m_pGlossMap->SetResource(pGlossMap->GetSRV());
+	}
 }
